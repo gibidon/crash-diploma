@@ -1,0 +1,79 @@
+Техническое задание
+
+Разработать приложение-сервис бронирования отелей
+
+области хранения данных:
+
+
+  -redux store на клиенте
+
+Сущности приложения:
+
+- пользователь: БД( список пользователей), BFF (сессия текущего пользователя), стор(отображения в браузере)
+  -роль пользователя: БД(список ролей), BFF(сессия пользователя с ролью), стор(использование на клиенте)
+  -отель: БД (список отелей), стор(отображение в браузере)
+  
+
+  Таблицы БД:
+  -пользователи -users:id/login/password/registed_at/role_id
+  -отели -hotels:id/name/imageUrl/description
+  -роли - roles: id/name
+  -статьи - posts: id/title/image_url/content/published_at
+  -отзывы - reviews: id/author_id/ hotel_id /content
+
+Схема состояния на BFF:
+-сессия текущего пользователя: логин, пароль, роль
+
+Схема для редакс стора на клиенте:
+-app: waslogout
+-user : id/login/ role_id/session
+-hotels: массив hotel: id/ title/ image_url/ reviews_number?
+-hotel: id/ title/ image_url/content / reviews: массив review: id,author/ content/ published_at
+-users: массив user: id,login/ registered_at/ role
+
+
+
+
+
+
+
+
+
+
+
+Схему расположения берем с темплейтов, дизайн копируем с авиасейлс/букинга(они похожи).Карточку отелей тоже копируем дизайн
+Красивые ховеры инпутов, карточек отелей,кнопок
+Красивые инпуты, модульный цсс. Красивые карточки отелей
+
+Фишки от Лаврика: intercetion observer, глоб обработка ошибок, hsi от wds, выпадающее меню от ульби, градинтный текст, модальные окна, смена цвета через контекст, бегущая лента?, 3d  planes flying over the globe, лоадер от ульби или лаврика
+https://www.youtube.com/watch?v=XXzqSAt3UIw
+
+основы, пагинация. страница админа
+имейл лист, футер, слайдер
+
+
+---------------------------------------------------------------------------------
+import { useState, useEffect } from 'react'
+
+export default function useFetch(url, options = {}){
+	let [ done, setDone ] = useState(false);
+	let [ data, setData ] = useState(null);
+	let [ error, setError ] = useState(null);
+
+	useEffect(() => {
+		fetch(url, options)
+			.then(response => response.text())
+			.then(text => setData(text))
+			.catch(e => setError(e))
+			.finally(() => setDone(true));
+	}, []);
+
+	return { done, data, error };
+}
+-----------------------------------------------------------------------------------
+тек задачи:
+добавлениу функционала отзывов для зарег пользователей
+функционал редактирования отеля админу, удаления, обновления
+страница броней пользователя
+страница админа с круд операциями
+добавить подписку имейл, футер
