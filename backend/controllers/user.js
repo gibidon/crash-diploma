@@ -54,22 +54,35 @@ async function createReservation(userId, reservationData) {
 	})
 }
 
-async function getReservations(id) {
-	const user = await User.findOne({ _id: id })
+async function getUserReservations(userId) {
+	const user = await User.findOne({ _id: userId })
 
 	// await user.populate("reservations")
 	await user.populate({ path: "reservations", populate: { path: "user" } })
 	// await user.populate({ path: "reservations", populate: { path: "hotel" } })
 
-	// console.log(user)
-
 	return user.reservations
 }
 
+async function getUsers() {
+	const users = await User.find({})
+
+	// await users.forEach((user) => user.populate({ path: "reservations" }))
+
+	return users
+}
+
+async function deleteUser(id) {
+	const deletedUser = await User.deleteOne({ _id: id })
+
+	return deletedUser
+}
 module.exports = {
+	getUsers,
 	login,
 	register,
 	createReservation,
-	getReservations,
+	getUserReservations,
+	deleteUser,
 	// updateUserReservations,
 }

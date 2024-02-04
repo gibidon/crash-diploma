@@ -8,3 +8,5 @@ module.exports = function (reservation) {
 		hotel: reservation.hotel,
 	}
 }
+
+//TODO change to normal,syncronize with frontend data

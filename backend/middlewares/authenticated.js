@@ -14,6 +14,7 @@ module.exports = async function (req, res, next) {
 	}
 
 	req.user = user
+	console.log("req.user: ", req.user)
 
 	next()
 }

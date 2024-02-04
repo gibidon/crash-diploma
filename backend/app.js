@@ -14,12 +14,22 @@ const {
 	login,
 	register,
 	createReservation,
-	getReservations,
-	// updateUserReservations,
+	getUserReservations,
+	getUsers,
+	deleteUser,
 } = require("./controllers/user")
+const {
+	updateReservation,
+	deleteReservation,
+	getReservations,
+} = require("./controllers/reservation")
+
+const { addSubscription } = require("./controllers/subscription")
 const { addReview, deleteReview } = require("./controllers/review")
 
 const authenticated = require("./middlewares/authenticated")
+const hasRole = require("./middlewares/hasRole")
+const ROLES = require("./constants/roles")
 
 const mapHotel = require("./helpers/mapHotel")
 const mapUser = require("./helpers/mapUser")
@@ -36,7 +46,9 @@ app.post("/register", async (req, res) => {
 	try {
 		const { user, token } = await register(req.body.login, req.body.password)
 
-		res.cookie("token", token, { httpOnly: true }).send({ error: null, user }) //TODO MAP
+		res
+			.cookie("token", token, { httpOnly: true })
+			.send({ error: null, user: mapUser(user) })
 	} catch (e) {
 		res.send({ error: e.message || "Unknown error" })
 	}
@@ -48,7 +60,6 @@ app.post("/login", async (req, res) => {
 		res
 			.cookie("token", token, { httpOnly: true })
 			.send({ error: null, user: mapUser(user) })
-		// .send({ error: null, user })
 	} catch (e) {
 		res.send({ error: e.message || "Unknown error" })
 	}
@@ -58,25 +69,38 @@ app.post("/logout", async (req, res) => {
 	res.cookie("token", "", { httpOnly: true }).send({})
 })
 
+app.post("/subscriptions", async (req, res) => {
+	console.log("in susscr")
+	await addSubscription(req.body)
+
+	res.send({ error: null })
+})
+
 app.get("/hotels", async (req, res) => {
 	const { hotels, lastPage } = await getHotels(
 		req.query.search,
 		req.query.limit,
 		req.query.page,
 		req.query.country,
-		req.query.price
+		req.query.min,
+		req.query.max,
+		req.query.rating
 	)
 
-	res.send({ data: { hotels: hotels.map(mapHotel), lastPage } })
+	setTimeout(() => {
+		// res.send({ data: { hotels: hotels.map(mapHotel), lastPage } })
+		res.send({ hotels: hotels.map(mapHotel), lastPage })
+	}, 800)
 })
 
 app.get("/hotel/:id", async (req, res) => {
 	const hotel = await getHotel(req.params.id)
+	console.log("h in get", hotel)
 
-	// console.log("hotel in get: ", hotel)
-	// setTimeout(() => {
-	res.send({ data: mapHotel(hotel) })
-	// }, 1500)
+	setTimeout(() => {
+		res.send({ data: mapHotel(hotel) })
+		// res.send(mapHotel(hotel))
+	}, 1000)
 })
 
 app.post("/users/:id/reservations", async (req, res) => {
@@ -90,16 +114,50 @@ app.post("/users/:id/reservations", async (req, res) => {
 })
 
 app.get("/users/:id/reservations", async (req, res) => {
-	const userReservations = await getReservations(req.params.id, req.body)
+	const userReservations = await getUserReservations(req.params.id, req.body)
 
+	console.log("res", userReservations)
 	// res.send({ data: userReservations })
-	res.send(userReservations.map(mapReservation))
+	setTimeout(() => {
+		res.send(userReservations.map(mapReservation))
+	}, 1000)
+})
+
+app.delete("/reservations/:reservationId/hotels/:hotelId", async (req, res) => {
+	await deleteReservation(req.params.reservationId, req.params.hotelId)
+	res.send({ error: null })
+})
+
+app.patch("/reservations/:reservationId", async (req, res) => {
+	await updateReservation(req.params.reservationId, {
+		dateStart: req.body.dateStart,
+		dateEnd: req.body.dateEnd,
+		guestQuantity: req.body.guestQuantity,
+	})
 })
 
 app.use(authenticated)
 
 // app.post("/hotels/create", hasRole([ROLES.ADMIN]), async (req, res) => {
-app.post("/hotels/create", async (req, res) => {
+app.get("/users", hasRole([ROLES.ADMIN]), async (req, res) => {
+	const users = await getUsers()
+
+	res.send({
+		// fiter not to show admins
+		users: users.map(mapUser).filter((user) => user.roleId !== ROLES.ADMIN),
+		error: null,
+	})
+})
+
+app.delete("/users/:id", hasRole([ROLES.ADMIN]), async (req, res) => {
+	const deletedUser = await deleteUser(req.params.id)
+	console.log(deletedUser)
+
+	return { error: null }
+})
+
+app.post("/hotels/create", hasRole([ROLES.ADMIN]), async (req, res) => {
+	// app.post("/hotels/create", async (req, res) => {
 	const newHotel = await addHotel({
 		title: req.body.title,
 		rating: req.body.rating,
@@ -115,13 +173,17 @@ app.patch("/hotels/:id", async (req, res) => {
 	const updatedHotel = await editHotel(req.params.id, {
 		title: req.body.title,
 		description: req.body.description,
+		country: req.body.country,
+		rating: req.body.rating,
+		price: req.body.price,
+		images: req.body.images,
 	})
 
 	res.send({ data: mapHotel(updatedHotel) })
 })
 
-// app.delete("/hotels/:id", hasRole([ROLES.ADMIN]), async (req, res) => {
-app.delete("/hotels/:id", async (req, res) => {
+app.delete("/hotels/:id", hasRole([ROLES.ADMIN]), async (req, res) => {
+	// app.delete("/hotels/:id", async (req, res) => {
 	await deleteHotel(req.params.id)
 
 	res.send({ error: null })
@@ -150,6 +212,13 @@ app.delete(
 		res.send({ error: null })
 	}
 )
+
+app.get("/reservations", hasRole([ROLES.ADMIN]), async (req, res) => {
+	const reservations = await getReservations({})
+
+	console.log("re", reservations)
+	res.send({ reservations: reservations.map(mapReservation), error: null })
+})
 
 mongoose.connect(process.env.DB_CONNECTION_STRING).then(() => {
 	app.listen(port, () => {

@@ -12,7 +12,7 @@ const HotelSchema = mongoose.Schema({
 	},
 	price: Number,
 	country: String,
-	rating: String,
+	rating: Number,
 	reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }],
 })
 
