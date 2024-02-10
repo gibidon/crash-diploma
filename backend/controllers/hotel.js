@@ -6,8 +6,8 @@ async function getHotels(
 	page = 1,
 	country = "",
 	min = 1,
-	max = 400,
-	rating = 4
+	max = 400
+	// rating = 4
 ) {
 	const [hotels, count] = await Promise.all([
 		Hotel.find({
@@ -27,6 +27,17 @@ async function getHotels(
 	])
 
 	return { hotels, lastPage: Math.ceil(count / limit) }
+}
+
+async function getFeaturedHotels() {
+	try {
+		// const featuredHotels = await Hotel.find({}).sort({ price: asc }).limit(6)
+		const featuredHotels = await Hotel.find({}).sort({ price: 1 }).limit(6)
+		// console.log("in ff", featuredHotels)
+		return featuredHotels
+	} catch {
+		throw new Error("Error getting featured hotels")
+	}
 }
 
 async function addHotel(hotel) {
@@ -57,7 +68,16 @@ async function getHotel(id) {
 }
 
 async function deleteHotel(id) {
-	return await Hotel.deleteOne({ _id: id })
+	const deletedHotel = await Hotel.deleteOne({ _id: id })
+
+	return deleteHotel
 }
 
-module.exports = { addHotel, deleteHotel, editHotel, getHotel, getHotels }
+module.exports = {
+	addHotel,
+	deleteHotel,
+	editHotel,
+	getHotel,
+	getHotels,
+	getFeaturedHotels,
+}

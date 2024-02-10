@@ -2,9 +2,9 @@ module.exports = function (reservation) {
 	return {
 		id: reservation._id,
 		user: reservation.user,
-		checkIn: reservation.dateStart,
-		checkOut: reservation.dateEnd,
-		guests: reservation.guestQuantity,
+		checkIn: reservation.checkIn,
+		checkOut: reservation.checkOut,
+		guestQuantity: reservation.guestQuantity,
 		hotel: reservation.hotel,
 	}
 }

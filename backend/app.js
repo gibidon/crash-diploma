@@ -9,6 +9,7 @@ const {
 	editHotel,
 	getHotel,
 	getHotels,
+	getFeaturedHotels,
 } = require("./controllers/hotel")
 const {
 	login,
@@ -57,6 +58,7 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
 	try {
 		const { user, token } = await login(req.body.login, req.body.password)
+
 		res
 			.cookie("token", token, { httpOnly: true })
 			.send({ error: null, user: mapUser(user) })
@@ -70,7 +72,6 @@ app.post("/logout", async (req, res) => {
 })
 
 app.post("/subscriptions", async (req, res) => {
-	console.log("in susscr")
 	await addSubscription(req.body)
 
 	res.send({ error: null })
@@ -93,9 +94,17 @@ app.get("/hotels", async (req, res) => {
 	}, 800)
 })
 
+app.get("/hotels/featured", async (req, res) => {
+	try {
+		const featuredHotels = await getFeaturedHotels()
+		res.send(featuredHotels)
+	} catch (error) {
+		throw new Error("Error getting featured hotels")
+	}
+})
+
 app.get("/hotel/:id", async (req, res) => {
 	const hotel = await getHotel(req.params.id)
-	console.log("h in get", hotel)
 
 	setTimeout(() => {
 		res.send({ data: mapHotel(hotel) })
@@ -104,19 +113,17 @@ app.get("/hotel/:id", async (req, res) => {
 })
 
 app.post("/users/:id/reservations", async (req, res) => {
-	// const userReservations = await createReservation(req.params.id, req.body)
-
-	// res.send({ data: userReservations })
-
-	await createReservation(req.params.id, req.body)
-
-	res.send({ error: null })
+	try {
+		const newReservation = await createReservation(req.params.id, req.body)
+		res.send({ data: newReservation, error: null })
+	} catch (error) {
+		res.send({ error: error.message || "Unknown error" })
+	}
 })
 
 app.get("/users/:id/reservations", async (req, res) => {
 	const userReservations = await getUserReservations(req.params.id, req.body)
 
-	console.log("res", userReservations)
 	// res.send({ data: userReservations })
 	setTimeout(() => {
 		res.send(userReservations.map(mapReservation))
@@ -130,10 +137,14 @@ app.delete("/reservations/:reservationId/hotels/:hotelId", async (req, res) => {
 
 app.patch("/reservations/:reservationId", async (req, res) => {
 	await updateReservation(req.params.reservationId, {
-		dateStart: req.body.dateStart,
-		dateEnd: req.body.dateEnd,
+		checkIn: req.body.checkIn,
+		checkOut: req.body.checkOut,
 		guestQuantity: req.body.guestQuantity,
 	})
+
+	setTimeout(() => {
+		res.send({ error: null })
+	}, 900)
 })
 
 app.use(authenticated)
@@ -151,7 +162,7 @@ app.get("/users", hasRole([ROLES.ADMIN]), async (req, res) => {
 
 app.delete("/users/:id", hasRole([ROLES.ADMIN]), async (req, res) => {
 	const deletedUser = await deleteUser(req.params.id)
-	console.log(deletedUser)
+	// console.log(deletedUser)
 
 	return { error: null }
 })
@@ -183,29 +194,25 @@ app.patch("/hotels/:id", async (req, res) => {
 })
 
 app.delete("/hotels/:id", hasRole([ROLES.ADMIN]), async (req, res) => {
-	// app.delete("/hotels/:id", async (req, res) => {
 	await deleteHotel(req.params.id)
 
 	res.send({ error: null })
 })
 
 app.post("/hotels/:id/reviews", async (req, res) => {
+	console.log("req.user.id: ", req.user.id)
+
 	const newReview = await addReview(req.params.id, {
 		content: req.body.content,
 		author: req.user.id,
-		// author: req.body.id,
 	})
 
 	res.send({ data: mapReview(newReview) })
 })
 
-// app.post(`/book`, async (req, res) => {
-// 	await updateUserBookings(req.body.userLogin, req.body.hotelId)
-// })
-
 app.delete(
 	"/hotels/:hotelId/reviews/:reviewId",
-	// hasRole([ROLES.ADMIN, ROLES.MODERATOR]),
+
 	async (req, res) => {
 		await deleteReview(req.params.hotelId, req.params.reviewId)
 

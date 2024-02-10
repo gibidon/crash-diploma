@@ -1,5 +1,6 @@
 const User = require("../models/User")
 const Reservation = require("../models/Reservation")
+const Review = require("../models/Review")
 const bcrypt = require("bcrypt")
 const { generate } = require("../helpers/token")
 // const ROLES = require("../constants/roles")
@@ -47,8 +48,6 @@ async function login(login, password) {
 async function createReservation(userId, reservationData) {
 	const newReservation = await Reservation.create(reservationData)
 
-	console.log(newReservation)
-
 	await User.findByIdAndUpdate(userId, {
 		$push: { reservations: newReservation },
 	})
@@ -74,6 +73,12 @@ async function getUsers() {
 
 async function deleteUser(id) {
 	const deletedUser = await User.deleteOne({ _id: id })
+
+	//delete user reservations
+	const deletedReservations = await Reservation.deleteMany({ user: id })
+
+	//delete user's reviews
+	const deletedReviews = await Review.deleteMany({ author: id })
 
 	return deletedUser
 }

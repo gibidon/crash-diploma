@@ -1,9 +1,12 @@
 const mongoose = require("mongoose")
+const getDateNow = require("../utils/get-date-now")
+
+const dateToday = new Date().toISOString().split("T")[0]
 
 const ReservationSchema = mongoose.Schema({
 	user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-	dateStart: { type: String },
-	dateEnd: { type: String },
+	checkIn: { type: Date, min: getDateNow() },
+	checkOut: { type: Date, min: getDateNow() },
 	guestQuantity: { type: Number, default: 1 },
 	hotel: { type: mongoose.Schema.Types.ObjectId, ref: "Hotel" },
 })

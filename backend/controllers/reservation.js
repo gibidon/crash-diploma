@@ -11,6 +11,7 @@ async function updateReservation(id, reservation) {
 
 async function deleteReservation(reservationId, hotelId) {
 	await Reservation.deleteOne({ _id: reservationId })
+
 	await User.findByIdAndUpdate(hotelId, {
 		$pull: { reservations: { hotel: hotelId } },
 	})
@@ -21,4 +22,5 @@ async function getReservations() {
 
 	return reservations
 }
+
 module.exports = { getReservations, updateReservation, deleteReservation }

@@ -13,6 +13,7 @@ async function addReview(hotelId, review) {
 
 async function deleteReview(hotelId, reviewId) {
 	await Review.deleteOne({ _id: reviewId })
+
 	await Hotel.findByIdAndUpdate(hotelId, { $pull: { reviews: reviewId } })
 }
 

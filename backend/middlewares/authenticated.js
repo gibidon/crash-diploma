@@ -3,7 +3,7 @@ const { verify } = require("../helpers/token")
 
 module.exports = async function (req, res, next) {
 	const tokenData = verify(req.cookies.token)
-	console.log("token data in auth: ", tokenData)
+	// console.log("token data in auth: ", tokenData)
 
 	const user = await User.findOne({ _id: tokenData.id })
 
@@ -14,7 +14,7 @@ module.exports = async function (req, res, next) {
 	}
 
 	req.user = user
-	console.log("req.user: ", req.user)
+	// console.log("req.user: ", req.user)
 
 	next()
 }
